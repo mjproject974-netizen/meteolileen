@@ -650,11 +650,16 @@ console.log("la temperature ressentie : "+ ressenti);
     <div class="header">
       <!-- Animated SVG clouds in header -->
       <svg class="clouds-svg" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
-        <!-- Cloud 1 (far, big) -->
-        <g class="cloud-1" opacity=".18">
-          <ellipse cx="320" cy="30" rx="55" ry="18" fill="white"/>
-          <ellipse cx="295" cy="35" rx="30" ry="16" fill="white"/>
-          <ellipse cx="350" cy="35" rx="28" ry="14" fill="white"/>
+        <!-- Cloud 1 (far, big, le plus à droite) -->
+        <g class="cloud-1">
+          <g opacity=".18">
+            <ellipse cx="320" cy="30" rx="55" ry="18" fill="white"/>
+            <ellipse cx="295" cy="35" rx="30" ry="16" fill="white"/>
+            <ellipse cx="350" cy="35" rx="28" ry="14" fill="white"/>
+          </g>
+          <text x="320" y="31" text-anchor="middle" dominant-baseline="central"
+                font-family="Cinzel, serif" font-size="14" letter-spacing="1.5"
+                fill="#f5f0e2" opacity=".55">${timeStr}</text>
         </g>
         <!-- Cloud 2 (mid) -->
         <g class="cloud-2" opacity=".13">
