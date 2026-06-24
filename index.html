@@ -536,7 +536,15 @@ function gearSVG(size, color='#c8a84b') {
   </svg>`;
 }
 
-function crystalSVG(size=72) {
+/**
+ * Génère le cristal SVG avec l'icône météo incrustée en son centre.
+ *
+ * @param {number} size Taille du cristal en pixels (largeur/hauteur du SVG)
+ * @param {string} icon Emoji (icône météo) à afficher au centre du cristal
+ * @param {number} iconSize Taille de la police de l'icône (ajustable indépendamment de `size`)
+ * @returns {string} Markup SVG du cristal
+ */
+function crystalSVG(size=72, icon='🌡️', iconSize=26) {
   return `<svg class="crystal-icon" width="${size}" height="${size}" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
     <polygon points="36,3 58,18 58,54 36,69 14,54 14,18" fill="#a8d4e8" fill-opacity=".65" stroke="#c8e8f4" stroke-width="1.2"/>
     <polygon points="36,10 52,22 52,50 36,62 20,50 20,22" fill="#c8e8f4" fill-opacity=".45" stroke="#e0f4fc" stroke-width=".7"/>
@@ -544,8 +552,12 @@ function crystalSVG(size=72) {
     <line x1="36" y1="3" x2="36" y2="69" stroke="#e8f6fc" stroke-width=".8" stroke-opacity=".7"/>
     <line x1="14" y1="18" x2="58" y2="54" stroke="#e8f6fc" stroke-width=".6" stroke-opacity=".5"/>
     <line x1="58" y1="18" x2="14" y2="54" stroke="#e8f6fc" stroke-width=".6" stroke-opacity=".5"/>
-    <circle cx="36" cy="36" r="5" fill="#ffffff" fill-opacity=".6"/>
-    <circle cx="36" cy="36" r="2.5" fill="#a8d4e8" fill-opacity=".9"/>
+    <!-- L'icône est dessinée dans le MÊME système de coordonnées que le cristal (viewBox 0 0 72 72),
+         donc quand .crystal-icon flotte / tourne via crystalFloat, l'icône suit exactement le cristal
+         et reste toujours centrée en (36,36), peu importe l'animation. -->
+    <text x="36" y="36" text-anchor="middle" dominant-baseline="central" dy="0.05em"
+          font-size="${iconSize}" fill="#2a1f14"
+          style="font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;">${icon}</text>
   </svg>`;
 }
 
@@ -673,7 +685,7 @@ console.log("la temperature ressentie : "+ ressenti);
           <div class="condition-text">${cond}</div>
           <div class="update-time">⏱ Consulté à ${timeStr}</div>
         </div>
-        ${crystalSVG(72)}
+        ${crystalSVG(72, icon, 26)}
       </div>
 
       <!-- Gears bottom-right -->
