@@ -4,192 +4,468 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Météo Saint-Denis – La Réunion</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --ocean:   #0d5f8a;
-      --sky:     #4ab3d8;
-      --foam:    #e8f6fb;
-      --coral:   #e8613a;
-      --sand:    #f5f0e8;
-      --night:   #0a2233;
-      --text:    #1a3a4a;
-      --muted:   #6b8fa3;
-      --radius:  16px;
+      --laputa-sky:    #7ba7c4;
+      --laputa-deep:   #3d6b8a;
+      --laputa-gold:   #c8a84b;
+      --laputa-amber:  #e8c97a;
+      --laputa-stone:  #8b7355;
+      --laputa-moss:   #6b8c5a;
+      --laputa-cream:  #f5f0e2;
+      --laputa-parch:  #ede5cc;
+      --laputa-rust:   #9b6b3a;
+      --laputa-dark:   #2a1f14;
+      --laputa-sepia:  #4a3728;
+      --laputa-crystal:#a8d4e8;
+      --radius: 4px;
+    }
+
+    @keyframes floatCloud {
+      0%   { transform: translateX(0px) translateY(0px); }
+      33%  { transform: translateX(8px) translateY(-4px); }
+      66%  { transform: translateX(-4px) translateY(-7px); }
+      100% { transform: translateX(0px) translateY(0px); }
+    }
+    @keyframes floatCloud2 {
+      0%   { transform: translateX(0px) translateY(0px); }
+      50%  { transform: translateX(-10px) translateY(-5px); }
+      100% { transform: translateX(0px) translateY(0px); }
+    }
+    @keyframes gearSpin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    @keyframes gearSpinReverse {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(-360deg); }
+    }
+    @keyframes crystalPulse {
+      0%, 100% { opacity: .85; filter: drop-shadow(0 0 6px #a8d4e8aa); }
+      50%       { opacity: 1;   filter: drop-shadow(0 0 14px #a8d4e8ff); }
+    }
+    @keyframes crystalFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      25%       { transform: translateY(-6px) rotate(2deg); }
+      75%       { transform: translateY(-3px) rotate(-1deg); }
+    }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes shimmer {
+      0%, 100% { opacity: .6; }
+      50%       { opacity: 1; }
+    }
+    @keyframes birdFly {
+      0%   { transform: translateX(-60px) translateY(0px); opacity: 0; }
+      10%  { opacity: .7; }
+      45%  { transform: translateX(160px) translateY(-18px); }
+      55%  { transform: translateX(220px) translateY(-12px); }
+      90%  { opacity: .5; }
+      100% { transform: translateX(420px) translateY(-22px); opacity: 0; }
+    }
+    @keyframes propeller {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    @keyframes runeGlow {
+      0%, 100% { opacity: .25; }
+      50%       { opacity: .55; }
     }
 
     body {
-      font-family: 'Space Grotesk', sans-serif;
-      background: var(--sand);
-      color: var(--text);
+      font-family: 'Crimson Text', Georgia, serif;
+      background: linear-gradient(160deg, #b8d4e8 0%, #8fb8d0 40%, #c8b89a 100%);
+      color: var(--laputa-dark);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Background ambient clouds */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background:
+        radial-gradient(ellipse 200px 80px at 15% 30%, rgba(255,255,255,.35) 0%, transparent 70%),
+        radial-gradient(ellipse 280px 100px at 75% 20%, rgba(255,255,255,.25) 0%, transparent 70%),
+        radial-gradient(ellipse 150px 60px at 50% 70%, rgba(255,255,255,.2) 0%, transparent 70%);
+      pointer-events: none;
+      animation: floatCloud 18s ease-in-out infinite;
     }
 
     .card {
-      background: white;
+      background: var(--laputa-cream);
       border-radius: var(--radius);
       width: 100%;
       max-width: 400px;
       overflow: hidden;
-      box-shadow: 0 4px 24px rgba(10,34,51,.12);
+      box-shadow:
+        0 0 0 1px var(--laputa-stone),
+        0 0 0 3px var(--laputa-parch),
+        0 0 0 4px var(--laputa-gold),
+        0 8px 32px rgba(42,31,20,.35);
+      position: relative;
+      animation: fadeSlideUp .8s ease both;
     }
+
+    /* Corner ornaments */
+    .card::before, .card::after {
+      content: '✦';
+      position: absolute;
+      font-size: 14px;
+      color: var(--laputa-gold);
+      z-index: 10;
+      animation: shimmer 3s ease-in-out infinite;
+    }
+    .card::before { top: 6px; left: 8px; }
+    .card::after  { top: 6px; right: 8px; }
 
     /* ── Header ── */
     .header {
-      background: linear-gradient(135deg, var(--ocean) 0%, var(--sky) 100%);
-      padding: 28px 24px 24px;
-      color: white;
+      background:
+        linear-gradient(180deg, #4a7a9b 0%, #3d6b8a 60%, #2e5470 100%);
+      padding: 28px 24px 20px;
+      color: var(--laputa-cream);
       position: relative;
+      overflow: hidden;
+      border-bottom: 2px solid var(--laputa-gold);
+    }
+
+    /* Rune decorations in header */
+    .header::before {
+      content: '⊕ ⊗ ⊕ ⊗ ⊕ ⊗ ⊕ ⊗ ⊕ ⊗ ⊕ ⊗ ⊕';
+      position: absolute;
+      bottom: 6px; left: 0; right: 0;
+      text-align: center;
+      font-size: 8px;
+      letter-spacing: 4px;
+      color: var(--laputa-gold);
+      opacity: .4;
+      animation: runeGlow 4s ease-in-out infinite;
+    }
+
+    /* SVG cloud layers */
+    .clouds-svg {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .cloud-1 { animation: floatCloud  14s ease-in-out infinite; }
+    .cloud-2 { animation: floatCloud2 20s ease-in-out infinite; }
+    .cloud-3 { animation: floatCloud  17s ease-in-out infinite reverse; }
+
+    /* Bird */
+    .bird-wrap {
+      position: absolute;
+      top: 18px; left: 0;
+      width: 100%; height: 20px;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .bird {
+      position: absolute;
+      top: 0; left: 0;
+      font-size: 13px;
+      animation: birdFly 12s ease-in-out infinite;
+      animation-delay: 3s;
+      opacity: 0;
     }
 
     .location {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: .12em;
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: .18em;
       text-transform: uppercase;
-      opacity: .75;
+      color: var(--laputa-amber);
       margin-bottom: 4px;
+      position: relative;
     }
 
-    .city { font-size: 22px; font-weight: 600; }
-    .island { font-size: 13px; opacity: .7; margin-top: 2px; }
+    .city {
+      font-family: 'Cinzel', serif;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--laputa-cream);
+      position: relative;
+      text-shadow: 0 1px 8px rgba(0,0,0,.4);
+    }
+    .island {
+      font-family: 'Crimson Text', serif;
+      font-style: italic;
+      font-size: 13px;
+      color: var(--laputa-crystal);
+      margin-top: 2px;
+      position: relative;
+    }
 
     .main-temp-row {
       display: flex;
-      align-items: flex-end;
+      align-items: flex-start;
       justify-content: space-between;
-      margin-top: 20px;
+      margin-top: 18px;
+      position: relative;
     }
 
     .temp-big {
-      font-size: 64px;
-      font-weight: 300;
+      font-family: 'Cinzel', serif;
+      font-size: 62px;
+      font-weight: 400;
       line-height: 1;
       letter-spacing: -2px;
+      color: var(--laputa-cream);
+      text-shadow: 0 0 20px rgba(168,212,232,.5);
     }
-
-    .temp-unit { font-size: 28px; font-weight: 400; vertical-align: super; margin-left: 2px; }
-
-    .condition-icon {
-      font-size: 56px;
-      line-height: 1;
-      filter: drop-shadow(0 2px 6px rgba(0,0,0,.2));
+    .temp-unit {
+      font-family: 'Cinzel', serif;
+      font-size: 26px;
+      font-weight: 400;
+      vertical-align: super;
+      margin-left: 2px;
+      color: var(--laputa-amber);
     }
 
     .condition-text {
-      font-size: 13px;
-      opacity: .85;
-      margin-top: 8px;
+      font-style: italic;
+      font-size: 14px;
+      color: var(--laputa-crystal);
+      margin-top: 6px;
     }
-
     .update-time {
       font-size: 10px;
-      opacity: .55;
-      margin-top: 4px;
+      color: rgba(245,240,226,.45);
+      margin-top: 3px;
+      letter-spacing: .06em;
+    }
+
+    /* Crystal / Laputa stone floating icon */
+    .crystal-icon {
+      width: 72px;
+      height: 72px;
+      animation: crystalFloat 5s ease-in-out infinite, crystalPulse 3s ease-in-out infinite;
+      filter: drop-shadow(0 0 8px rgba(168,212,232,.6));
+      flex-shrink: 0;
+    }
+
+    /* Gear decorations */
+    .gear-wrap {
+      position: absolute;
+      bottom: 14px; right: 16px;
+      display: flex; gap: 0px;
+      align-items: center;
+      opacity: .35;
+    }
+    .gear-big {
+      width: 28px; height: 28px;
+      transform-origin: center;
+      animation: gearSpin 8s linear infinite;
+    }
+    .gear-small {
+      width: 18px; height: 18px;
+      transform-origin: center;
+      animation: gearSpinReverse 4.4s linear infinite;
+      margin-left: -4px;
+      margin-top: 5px;
+    }
+    .gear-tiny {
+      width: 12px; height: 12px;
+      transform-origin: center;
+      animation: gearSpin 2.9s linear infinite;
+      margin-left: -3px;
+      margin-bottom: 2px;
     }
 
     /* ── Stats row ── */
     .stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      background: var(--foam);
-      border-bottom: 1px solid #d6eef7;
+      background: var(--laputa-parch);
+      border-bottom: 1px solid var(--laputa-stone);
+      position: relative;
+    }
+
+    /* Divider ornament */
+    .stats::before {
+      content: '— ✦ —';
+      position: absolute;
+      top: -10px; left: 50%; transform: translateX(-50%);
+      font-size: 10px;
+      color: var(--laputa-gold);
+      background: var(--laputa-parch);
+      padding: 0 6px;
+      letter-spacing: 2px;
     }
 
     .stat {
       padding: 14px 8px;
       text-align: center;
-      border-right: 1px solid #d6eef7;
+      border-right: 1px solid rgba(139,115,85,.3);
     }
     .stat:last-child { border-right: none; }
 
     .stat-label {
-      font-size: 9px;
-      font-weight: 600;
-      letter-spacing: .09em;
+      font-family: 'Cinzel', serif;
+      font-size: 8px;
+      font-weight: 400;
+      letter-spacing: .12em;
       text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 4px;
+      color: var(--laputa-stone);
+      margin-bottom: 5px;
     }
 
     .stat-value {
-      font-size: 15px;
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
       font-weight: 600;
-      color: var(--ocean);
+      color: var(--laputa-rust);
+    }
+
+    .stat-icon {
+      font-size: 15px;
+      margin-bottom: 3px;
+      display: block;
     }
 
     /* ── Forecast ── */
-    .forecast { padding: 16px 24px 20px; }
-
-    .forecast-title {
-      font-size: 9px;
-      font-weight: 600;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 12px;
+    .forecast {
+      padding: 16px 24px 20px;
+      background: var(--laputa-cream);
+      position: relative;
     }
 
-    .days { display: flex; gap: 8px; }
+    /* Subtle parchment texture lines */
+    .forecast::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 22px,
+        rgba(139,115,85,.06) 22px,
+        rgba(139,115,85,.06) 23px
+      );
+      pointer-events: none;
+    }
+
+    .forecast-title {
+      font-family: 'Cinzel', serif;
+      font-size: 9px;
+      font-weight: 400;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--laputa-stone);
+      margin-bottom: 12px;
+      text-align: center;
+      position: relative;
+    }
+    .forecast-title::before,
+    .forecast-title::after {
+      content: '──';
+      margin: 0 8px;
+      opacity: .5;
+    }
+
+    .days {
+      display: flex;
+      gap: 6px;
+      position: relative;
+    }
 
     .day {
       flex: 1;
-      background: var(--sand);
-      border-radius: 10px;
-      padding: 10px 6px;
+      background: var(--laputa-parch);
+      border: 1px solid rgba(139,115,85,.4);
+      border-radius: 3px;
+      padding: 10px 4px 8px;
       text-align: center;
+      transition: transform .2s, box-shadow .2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .day::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--laputa-gold), var(--laputa-amber), var(--laputa-gold));
+      opacity: .5;
+    }
+    .day:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(42,31,20,.15);
     }
 
     .day-name {
-      font-size: 9px;
-      font-weight: 600;
-      letter-spacing: .08em;
+      font-family: 'Cinzel', serif;
+      font-size: 8px;
+      font-weight: 400;
+      letter-spacing: .1em;
       text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 6px;
+      color: var(--laputa-stone);
+      margin-bottom: 5px;
     }
-
-    .day-icon { font-size: 22px; margin-bottom: 5px; }
-
+    .day-icon { font-size: 20px; margin-bottom: 4px; }
     .day-temp {
+      font-family: 'Cinzel', serif;
       font-size: 13px;
       font-weight: 600;
-      color: var(--ocean);
+      color: var(--laputa-rust);
     }
-
     .day-rain {
-      font-size: 9px;
-      color: var(--sky);
-      margin-top: 3px;
+      font-size: 10px;
+      color: var(--laputa-sky);
+      margin-top: 2px;
+      font-style: italic;
     }
 
     /* ── Footer ── */
     .footer {
       padding: 8px 24px 12px;
       text-align: center;
-      font-size: 9px;
-      color: var(--muted);
-      border-top: 1px solid #eee;
+      font-style: italic;
+      font-size: 11px;
+      color: var(--laputa-stone);
+      border-top: 1px solid rgba(139,115,85,.3);
+      background: var(--laputa-parch);
+      letter-spacing: .04em;
     }
 
+    /* ── Loading / Error ── */
     .loading-overlay {
-      position: absolute; inset: 0;
-      background: linear-gradient(135deg, var(--ocean) 0%, var(--sky) 100%);
-      display: flex; align-items: center; justify-content: center;
-      color: white; font-size: 14px; opacity: .9;
-      border-radius: var(--radius);
+      background: linear-gradient(160deg, #4a7a9b 0%, #3d6b8a 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 24px;
+      color: var(--laputa-cream);
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      letter-spacing: .1em;
+      gap: 16px;
+    }
+    .loading-crystal {
+      width: 48px; height: 48px;
+      animation: crystalFloat 3s ease-in-out infinite, crystalPulse 2s ease-in-out infinite;
     }
 
     .error-msg {
       padding: 24px;
       text-align: center;
-      color: var(--coral);
+      font-style: italic;
+      color: var(--laputa-rust);
       font-size: 13px;
     }
   </style>
@@ -198,7 +474,16 @@
 
 <div class="card">
   <div id="widget">
-    <div class="loading-overlay">Chargement de la météo…</div>
+    <div class="loading-overlay">
+      <svg class="loading-crystal" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="24,2 38,14 38,34 24,46 10,34 10,14" fill="#a8d4e8" fill-opacity=".7" stroke="#c8e8f4" stroke-width="1"/>
+        <polygon points="24,8 34,17 34,31 24,40 14,31 14,17" fill="#c8e8f4" fill-opacity=".5" stroke="#e0f2fa" stroke-width=".5"/>
+        <line x1="24" y1="2" x2="24" y2="46" stroke="#e0f2fa" stroke-width=".5" stroke-opacity=".6"/>
+        <line x1="10" y1="14" x2="38" y2="34" stroke="#e0f2fa" stroke-width=".5" stroke-opacity=".6"/>
+        <line x1="38" y1="14" x2="10" y2="34" stroke="#e0f2fa" stroke-width=".5" stroke-opacity=".6"/>
+      </svg>
+      Consultation des vents de Laputa…
+    </div>
   </div>
 </div>
 
@@ -229,10 +514,39 @@ async function fetchWeather() {
     '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code' +
     '&daily=weather_code,temperature_2m_max,precipitation_probability_max' +
     '&timezone=Indian%2FReunion&forecast_days=5&wind_speed_unit=kmh';
-
   const r = await fetch(url);
   if (!r.ok) throw new Error('HTTP ' + r.status);
   return r.json();
+}
+
+function gearSVG(size, color='#c8a84b') {
+  const teeth = 8, r1 = size*.42, r2 = size*.32, ri = size*.18;
+  let d = '';
+  for (let i = 0; i < teeth * 2; i++) {
+    const a = (Math.PI * i) / teeth;
+    const r = i % 2 === 0 ? r1 : r2;
+    const x = size/2 + r * Math.cos(a);
+    const y = size/2 + r * Math.sin(a);
+    d += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ',' + y.toFixed(2);
+  }
+  d += 'Z';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display:block">
+    <path d="${d}" fill="${color}" fill-opacity=".9"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${ri}" fill="#2a1f14" fill-opacity=".6"/>
+  </svg>`;
+}
+
+function crystalSVG(size=72) {
+  return `<svg class="crystal-icon" width="${size}" height="${size}" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="36,3 58,18 58,54 36,69 14,54 14,18" fill="#a8d4e8" fill-opacity=".65" stroke="#c8e8f4" stroke-width="1.2"/>
+    <polygon points="36,10 52,22 52,50 36,62 20,50 20,22" fill="#c8e8f4" fill-opacity=".45" stroke="#e0f4fc" stroke-width=".7"/>
+    <polygon points="36,18 46,27 46,45 36,54 26,45 26,27" fill="#daf0f8" fill-opacity=".35" stroke="#ffffff" stroke-width=".4"/>
+    <line x1="36" y1="3" x2="36" y2="69" stroke="#e8f6fc" stroke-width=".8" stroke-opacity=".7"/>
+    <line x1="14" y1="18" x2="58" y2="54" stroke="#e8f6fc" stroke-width=".6" stroke-opacity=".5"/>
+    <line x1="58" y1="18" x2="14" y2="54" stroke="#e8f6fc" stroke-width=".6" stroke-opacity=".5"/>
+    <circle cx="36" cy="36" r="5" fill="#ffffff" fill-opacity=".6"/>
+    <circle cx="36" cy="36" r="2.5" fill="#a8d4e8" fill-opacity=".9"/>
+  </svg>`;
 }
 
 function render(d) {
@@ -263,37 +577,80 @@ function render(d) {
 
   document.getElementById('widget').innerHTML = `
     <div class="header">
-      <div class="location">📍 Météo en direct</div>
+      <!-- Animated SVG clouds in header -->
+      <svg class="clouds-svg" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
+        <!-- Cloud 1 (far, big) -->
+        <g class="cloud-1" opacity=".18">
+          <ellipse cx="320" cy="30" rx="55" ry="18" fill="white"/>
+          <ellipse cx="295" cy="35" rx="30" ry="16" fill="white"/>
+          <ellipse cx="350" cy="35" rx="28" ry="14" fill="white"/>
+        </g>
+        <!-- Cloud 2 (mid) -->
+        <g class="cloud-2" opacity=".13">
+          <ellipse cx="60" cy="55" rx="38" ry="13" fill="white"/>
+          <ellipse cx="42" cy="59" rx="20" ry="12" fill="white"/>
+          <ellipse cx="80" cy="59" rx="22" ry="11" fill="white"/>
+        </g>
+        <!-- Cloud 3 (small, near) -->
+        <g class="cloud-3" opacity=".1">
+          <ellipse cx="200" cy="20" rx="28" ry="9" fill="white"/>
+          <ellipse cx="185" cy="24" rx="16" ry="8" fill="white"/>
+          <ellipse cx="215" cy="24" rx="15" ry="7" fill="white"/>
+        </g>
+      </svg>
+
+      <!-- Flying bird -->
+      <div class="bird-wrap">
+        <div class="bird">🕊️</div>
+      </div>
+
+      <div class="location">✦ La méteo de Lileen ✦</div>
       <div class="city">Saint-Denis</div>
       <div class="island">La Réunion · Océan Indien</div>
+
       <div class="main-temp-row">
         <div>
           <span class="temp-big">${temp}<span class="temp-unit">°C</span></span>
           <div class="condition-text">${cond}</div>
-          <div class="update-time">Mis à jour à ${timeStr}</div>
+          <div class="update-time">⏱ Consulté à ${timeStr}</div>
         </div>
-        <div class="condition-icon">${icon}</div>
+        ${crystalSVG(72)}
+      </div>
+
+      <!-- Gears bottom-right -->
+      <div class="gear-wrap">
+        <div class="gear-big">${gearSVG(28, '#c8a84b')}</div>
+        <div class="gear-small">${gearSVG(18, '#a08038')}</div>
+        <div class="gear-tiny">${gearSVG(12, '#c8a84b')}</div>
       </div>
     </div>
+
     <div class="stats">
       <div class="stat">
+        <span class="stat-icon">💧</span>
         <div class="stat-label">Humidité</div>
         <div class="stat-value">${hum}%</div>
       </div>
       <div class="stat">
+        <span class="stat-icon">🌬️</span>
         <div class="stat-label">Vent</div>
-        <div class="stat-value">${wind} km/h</div>
+        <div class="stat-value">${wind}<span style="font-size:10px"> km/h</span></div>
       </div>
       <div class="stat">
+        <span class="stat-icon">🌧️</span>
         <div class="stat-label">Pluie J+0</div>
         <div class="stat-value">${d.daily.precipitation_probability_max[0] ?? 0}%</div>
       </div>
     </div>
+
     <div class="forecast">
-      <div class="forecast-title">Prévisions 5 jours</div>
+      <div class="forecast-title">Prévisions du Ciel</div>
       <div class="days">${forecastHTML}</div>
     </div>
-    <div class="footer">Données : Open-Meteo · Actualisation automatique toutes les 30 min</div>
+
+    <div class="footer">
+      ✦ Données : Open-Meteo · Laputa Weather Bureau · Mise à jour toutes les 30 min ✦
+    </div>
   `;
 }
 
@@ -301,13 +658,12 @@ function render(d) {
   try {
     const data = await fetchWeather();
     render(data);
-    // Auto-refresh toutes les 30 minutes
     setInterval(async () => {
       try { render(await fetchWeather()); } catch(e) {}
     }, 30 * 60 * 1000);
   } catch(e) {
     document.getElementById('widget').innerHTML =
-      `<div class="error-msg">⚠️ Impossible de charger la météo.<br><small>${e.message}</small></div>`;
+      `<div class="error-msg">✦ Les vents de Laputa sont introuvables.<br><small style="font-size:10px">${e.message}</small></div>`;
   }
 })();
 </script>
