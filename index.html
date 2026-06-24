@@ -549,6 +549,56 @@ function crystalSVG(size=72) {
   </svg>`;
 }
 
+/**
+ * Calcule la température ressentie.
+ *
+ * @param {number} T Température de l'air (°C)
+ * @param {number} V Vitesse du vent (km/h)
+ * @param {number} H Humidité relative (%)
+ * @returns {number} Température ressentie (°C)
+ */
+function temperatureRessentie(T, V, H) {
+
+  // Cas 1 : chaleur (Heat Index)
+  if (T >= 27) {
+    // Conversion en Fahrenheit
+    const Tf = T * 9 / 5 + 32;
+
+    const HI =
+      -42.379 +
+      2.04901523 * Tf +
+      10.14333127 * H -
+      0.22475541 * Tf * H -
+      0.00683783 * Tf * Tf -
+      0.05481717 * H * H +
+      0.00122874 * Tf * Tf * H +
+      0.00085282 * Tf * H * H -
+      0.00000199 * Tf * Tf * H * H;
+
+    // Retour en °C
+    return (HI - 32) * 5 / 9;
+  }
+
+  // Cas 2 : froid (Wind Chill)
+  if (T <= 10 && V > 4.8) {
+    return (
+      13.12 +
+      0.6215 * T -
+      11.37 * Math.pow(V, 0.16) +
+      0.3965 * T * Math.pow(V, 0.16)
+    );
+  }
+
+  // Cas 3 : températures modérées
+  return (
+    T -
+    0.7 * Math.sqrt(V) +
+    0.02 * (H - 50)
+  );
+}
+
+
+
 function render(d) {
   const c = d.current;
   const now = new Date();
@@ -559,6 +609,15 @@ function render(d) {
   const temp = Math.round(c.temperature_2m);
   const hum  = c.relative_humidity_2m;
   const wind = Math.round(c.wind_speed_10m);
+
+  const ressenti = Math.round(//Pas encore utilisé dans l'affichage, mais calculé pour info
+  temperatureRessentie(
+    c.temperature_2m,
+    c.wind_speed_10m,
+    c.relative_humidity_2m
+  )
+);
+console.log("la temperature ressentie : "+ ressenti);
 
   const forecastHTML = d.daily.time.slice(0,5).map((dateStr, i) => {
     const date = new Date(dateStr + 'T00:00:00');
