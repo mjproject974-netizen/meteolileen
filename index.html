@@ -44,9 +44,13 @@
       to   { transform: rotate(-360deg); }
     }
     @keyframes crystalPulse {
-      0%, 100% { opacity: .85; filter: drop-shadow(0 0 6px #a8d4e8aa); }
-      50%       { opacity: 1;   filter: drop-shadow(0 0 14px #a8d4e8ff); }
+      0%, 100% { opacity: .85; filter: drop-shadow(0 0 6px var(--crystal-glow, #a8d4e8aa)); }
+      50%       { opacity: 1;   filter: drop-shadow(0 0 14px var(--crystal-glow-hi, #a8d4e8ff)); }
     }
+    /* Teinte du halo du cristal selon le moment */
+    body.theme-aube        { --crystal-glow: #f0b070aa; --crystal-glow-hi: #f8d090ff; }
+    body.theme-crepuscule  { --crystal-glow: #e07040aa; --crystal-glow-hi: #f09050ff; }
+    body.theme-nuit        { --crystal-glow: #6080c0aa; --crystal-glow-hi: #80a0e0ff; }
     @keyframes crystalFloat {
       0%, 100% { transform: translateY(0px) rotate(0deg); }
       25%       { transform: translateY(-6px) rotate(2deg); }
@@ -80,7 +84,14 @@
 
     body {
       font-family: 'Crimson Text', Georgia, serif;
-      background: linear-gradient(160deg, #b8d4e8 0%, #8fb8d0 40%, #c8b89a 100%);
+      /* JOUR — azur tropical : cobalt profond au zénith → bleu layette vers l'horizon */
+      background: linear-gradient(175deg,
+        #0b5ea0 0%,
+        #1a82c8 22%,
+        #40a8d8 46%,
+        #7dc4e2 68%,
+        #b8dcea 85%,
+        #d8edf5 100%);
       color: var(--lileen-dark);
       min-height: 100vh;
       display: flex;
@@ -95,12 +106,33 @@
     body::before {
       content: '';
       position: fixed; inset: 0;
+      /* JOUR — voiles de cirrus blancs */
       background:
-        radial-gradient(ellipse 200px 80px at 15% 30%, rgba(255,255,255,.35) 0%, transparent 70%),
-        radial-gradient(ellipse 280px 100px at 75% 20%, rgba(255,255,255,.25) 0%, transparent 70%),
-        radial-gradient(ellipse 150px 60px at 50% 70%, rgba(255,255,255,.2) 0%, transparent 70%);
+        radial-gradient(ellipse 220px 80px at 15% 28%, rgba(255,255,255,.38) 0%, transparent 70%),
+        radial-gradient(ellipse 300px 100px at 78% 18%, rgba(255,255,255,.28) 0%, transparent 70%),
+        radial-gradient(ellipse 160px 55px at 50% 72%, rgba(255,255,255,.18) 0%, transparent 70%);
       pointer-events: none;
       animation: floatCloud 18s ease-in-out infinite;
+      transition: opacity 1.6s ease;
+    }
+    /* AUBE — lueur rose-dorée sur les nuages */
+    body.theme-aube::before {
+      background:
+        radial-gradient(ellipse 260px 90px at 20% 60%, rgba(240,160,80,.35) 0%, transparent 70%),
+        radial-gradient(ellipse 200px 70px at 70% 75%, rgba(220,100,100,.28) 0%, transparent 70%),
+        radial-gradient(ellipse 180px 65px at 45% 40%, rgba(180,100,160,.22) 0%, transparent 70%);
+    }
+    /* CRÉPUSCULE — embrasement chaud à l'horizon */
+    body.theme-crepuscule::before {
+      background:
+        radial-gradient(ellipse 300px 100px at 50% 85%, rgba(240,100,20,.45) 0%, transparent 65%),
+        radial-gradient(ellipse 200px 70px at 80% 70%, rgba(200,40,60,.30) 0%, transparent 65%),
+        radial-gradient(ellipse 160px 60px at 15% 65%, rgba(160,20,80,.22) 0%, transparent 65%);
+    }
+    /* NUIT — quasi-absent, juste une très légère lueur bleue au zénith */
+    body.theme-nuit::before {
+      background:
+        radial-gradient(ellipse 280px 120px at 50% 10%, rgba(30,60,120,.18) 0%, transparent 70%);
     }
 
     .card {
@@ -116,6 +148,29 @@
         0 8px 32px rgba(42,31,20,.35);
       position: relative;
       animation: fadeSlideUp .8s ease both;
+      transition: box-shadow 1.6s ease;
+    }
+    /* Halo de la carte : chaud à l'aube/crépuscule, bleu nuit la nuit */
+    body.theme-aube .card {
+      box-shadow:
+        0 0 0 1px #7a4838,
+        0 0 0 3px #ede5cc,
+        0 0 0 4px #d4884a,
+        0 8px 40px rgba(180,80,20,.45);
+    }
+    body.theme-crepuscule .card {
+      box-shadow:
+        0 0 0 1px #6a2010,
+        0 0 0 3px #ede5cc,
+        0 0 0 4px #c04010,
+        0 8px 40px rgba(160,30,10,.55);
+    }
+    body.theme-nuit .card {
+      box-shadow:
+        0 0 0 1px #101828,
+        0 0 0 3px #1a2238,
+        0 0 0 4px #8a9ab8,
+        0 8px 40px rgba(4,8,24,.8);
     }
 
     .card::before, .card::after {
@@ -131,8 +186,9 @@
 
     /* ── Header ── */
     .header {
+      /* JOUR — bleu Océan Indien profond */
       background:
-        linear-gradient(180deg, #4a7a9b 0%, #3d6b8a 60%, #2e5470 100%);
+        linear-gradient(180deg, #0d5a88 0%, #1878aa 38%, #146888 70%, #0e5070 100%);
       padding: 28px 24px 20px;
       color: var(--lileen-cream);
       position: relative;
@@ -153,24 +209,68 @@
       animation: runeGlow 4s ease-in-out infinite;
     }
 
+    /* ── AUBE ──
+       Zénith : indigo-violet profond
+       Mi-ciel : rose-mauve, corail
+       Horizon : ambre chaud, or pâle                      */
     body.theme-aube {
-      background: linear-gradient(160deg, #f7d9b8 0%, #f0b48f 35%, #e8c97a 70%, #c8b89a 100%);
+      background: linear-gradient(175deg,
+        #1a1450 0%,
+        #502068 18%,
+        #a84860 36%,
+        #d87050 55%,
+        #f0a840 74%,
+        #f8cc70 88%,
+        #fde8a8 100%);
     }
-    body.theme-crepuscule {
-      background: linear-gradient(160deg, #8a6a98 0%, #c97a5a 40%, #e8935a 70%, #c8b89a 100%);
-    }
-    body.theme-nuit {
-      background: linear-gradient(160deg, #1c2438 0%, #232a45 45%, #2e3454 100%);
+    body.theme-aube .header {
+      background: linear-gradient(180deg,
+        #2a0e42 0%,
+        #7a2850 30%,
+        #c86040 62%,
+        #e49840 100%);
     }
 
-    body.theme-aube .header {
-      background: linear-gradient(180deg, #c98a7a 0%, #d9a06a 55%, #e8c97a 100%);
+    /* ── CRÉPUSCULE ──
+       Zénith : violet quasi-noir
+       Mi-ciel : pourpre, cramoisi
+       Horizon : orange brûlé, or ardent                   */
+    body.theme-crepuscule {
+      background: linear-gradient(175deg,
+        #06020e 0%,
+        #280838 18%,
+        #720c30 34%,
+        #b82010 52%,
+        #d84c08 68%,
+        #f08018 82%,
+        #f8b030 100%);
     }
     body.theme-crepuscule .header {
-      background: linear-gradient(180deg, #5a4068 0%, #9a5a5a 55%, #d9794a 100%);
+      background: linear-gradient(180deg,
+        #080210 0%,
+        #400820 30%,
+        #981408 62%,
+        #c83808 100%);
+    }
+
+    /* ── NUIT ──
+       Zénith : noir quasi-absolu
+       Mi-ciel : bleu de minuit très sombre
+       Horizon : légère teinte indigo (réflexion des lumières) */
+    body.theme-nuit {
+      background: linear-gradient(175deg,
+        #010106 0%,
+        #02030c 25%,
+        #030818 50%,
+        #060e24 72%,
+        #0a1430 88%,
+        #101c3a 100%);
     }
     body.theme-nuit .header {
-      background: linear-gradient(180deg, #1a2138 0%, #161c30 60%, #0e1322 100%);
+      background: linear-gradient(180deg,
+        #010208 0%,
+        #030610 45%,
+        #020408 100%);
     }
 
     .stars-wrap {
