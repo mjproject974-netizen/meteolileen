@@ -68,13 +68,14 @@
       90%  { opacity: .5; }
       100% { transform: translateX(420px) translateY(-22px); opacity: 0; }
     }
-    @keyframes propeller {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-    }
     @keyframes runeGlow {
       0%, 100% { opacity: .25; }
       50%       { opacity: .55; }
+    }
+    /* Indicateur de fetch en cours : l'orbe dorée dans le footer pulse */
+    @keyframes fetchPulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: .25; }
     }
 
     body {
@@ -91,7 +92,6 @@
       transition: background 1.6s ease;
     }
 
-    /* Background ambient clouds */
     body::before {
       content: '';
       position: fixed; inset: 0;
@@ -118,7 +118,6 @@
       animation: fadeSlideUp .8s ease both;
     }
 
-    /* Corner ornaments */
     .card::before, .card::after {
       content: '✦';
       position: absolute;
@@ -142,7 +141,6 @@
       transition: background 1.6s ease;
     }
 
-    /* Rune decorations in header */
     .header::before {
       content: '⊕ ⊗ ⊕ ⊗ ⊕ ⊗ ⊕ ⊗ ⊕ ⊗ ⊕ ⊗ ⊕';
       position: absolute;
@@ -155,9 +153,6 @@
       animation: runeGlow 4s ease-in-out infinite;
     }
 
-    /* ── Cycle aube / jour / crépuscule / nuit ──
-       Par défaut (sans classe, ou .theme-jour) : palette "jour" déjà définie plus haut.
-       Ces classes sont posées sur <body> en JS selon l'heure de lever/coucher du soleil. */
     body.theme-aube {
       background: linear-gradient(160deg, #f7d9b8 0%, #f0b48f 35%, #e8c97a 70%, #c8b89a 100%);
     }
@@ -178,8 +173,6 @@
       background: linear-gradient(180deg, #1a2138 0%, #161c30 60%, #0e1322 100%);
     }
 
-    /* Étoiles : invisibles le jour, apparaissent au crépuscule, pleines la nuit,
-       puis s'effacent à l'aube. Clipées par .header (overflow:hidden). */
     .stars-wrap {
       position: absolute; inset: 0;
       pointer-events: none;
@@ -205,7 +198,6 @@
     body.theme-crepuscule .stars-wrap { opacity: .35; }
     body.theme-aube        .stars-wrap { opacity: .15; }
 
-    /* SVG cloud layers */
     .clouds-svg {
       position: absolute;
       top: 0; left: 0; right: 0;
@@ -218,7 +210,6 @@
     .cloud-2 { animation: floatCloud2 20s ease-in-out infinite; }
     .cloud-3 { animation: floatCloud  17s ease-in-out infinite reverse; }
 
-    /* Bird */
     .bird-wrap {
       position: absolute;
       top: 18px; left: 0;
@@ -302,7 +293,6 @@
       letter-spacing: .06em;
     }
 
-    /* Crystal / Lileen stone floating icon */
     .crystal-icon {
       width: 72px;
       height: 72px;
@@ -311,7 +301,6 @@
       flex-shrink: 0;
     }
 
-    /* Gear decorations */
     .gear-wrap {
       position: absolute;
       bottom: 14px; right: 16px;
@@ -348,7 +337,6 @@
       position: relative;
     }
 
-    /* Divider ornament */
     .stats::before {
       content: '— ✦ —';
       position: absolute;
@@ -397,7 +385,6 @@
       position: relative;
     }
 
-    /* Subtle parchment texture lines */
     .forecast::before {
       content: '';
       position: absolute; inset: 0;
@@ -494,6 +481,19 @@
       letter-spacing: .04em;
     }
 
+    /* Indicateur de fetch : l'orbe ✦ du footer pulse en doré pendant le chargement */
+    .footer-orb {
+      display: inline-block;
+      transition: color .4s;
+    }
+    .footer-orb.fetching {
+      color: var(--lileen-gold);
+      animation: fetchPulse .8s ease-in-out infinite;
+    }
+    .footer-orb.error {
+      color: #c06040;
+    }
+
     /* ── Loading / Error ── */
     .loading-overlay {
       background: linear-gradient(160deg, #4a7a9b 0%, #3d6b8a 100%);
@@ -540,6 +540,9 @@
 </div>
 
 <script>
+/* ═══════════════════════════════════════════════════════════════
+   TABLES DE CORRESPONDANCE WMO
+   ═══════════════════════════════════════════════════════════════ */
 const WMO = {
   0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️',
   45:'🌫️', 48:'🌫️',
@@ -548,7 +551,6 @@ const WMO = {
   80:'🌦️', 81:'🌧️', 82:'⛈️',
   95:'⛈️', 96:'⛈️', 99:'⛈️'
 };
-
 const WMO_TXT = {
   0:'Ciel dégagé', 1:'Ciel dégagé', 2:'Partiellement nuageux', 3:'Couvert',
   45:'Brouillard', 48:'Brouillard givrant',
@@ -557,16 +559,8 @@ const WMO_TXT = {
   80:'Averses légères', 81:'Averses', 82:'Averses violentes',
   95:'Orage', 96:'Orage avec grêle', 99:'Orage fort'
 };
+const WMO_NIGHT = { 0:'🌙', 1:'🌙' };
 
-const WMO_NIGHT = {
-  0:'🌙', 1:'🌙'
-};
-
-/**
- * Choisit l'icône météo : variante nocturne pour un ciel clair/dégagé
- * quand `isNight` est vrai (basé sur le champ `is_day` d'Open-Meteo),
- * sinon l'icône "jour" habituelle.
- */
 function pickIcon(code, isNight) {
   if (isNight && WMO_NIGHT[code] !== undefined) return WMO_NIGHT[code];
   return WMO[code] ?? '🌡️';
@@ -574,37 +568,17 @@ function pickIcon(code, isNight) {
 
 const DAYS_FR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
 
-async function fetchWeather() {
-  const url = 'https://api.open-meteo.com/v1/forecast' +
-    '?latitude=-20.8873039&longitude=55.4224441' +
-    '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,is_day' +
-    '&daily=weather_code,temperature_2m_max,precipitation_probability_max,sunrise,sunset' +
-    '&timezone=Indian%2FReunion&forecast_days=5&wind_speed_unit=kmh';
-  const r = await fetch(url);
-  if (!r.ok) throw new Error('HTTP ' + r.status);
-  return r.json();
-}
-
-/**
- * Détermine la période du cycle (aube, jour, crépuscule, nuit) à partir du
- * lever / coucher du soleil du jour, avec une marge de transition de 30 min
- * de part et d'autre de chaque évènement.
- *
- * @param {string} sunriseStr Heure de lever du soleil (locale, fournie par Open-Meteo)
- * @param {string} sunsetStr  Heure de coucher du soleil (locale, fournie par Open-Meteo)
- * @param {Date}   now        Instant courant
- * @returns {'aube'|'jour'|'crepuscule'|'nuit'}
- */
+/* ═══════════════════════════════════════════════════════════════
+   CYCLE JOUR / NUIT
+   ═══════════════════════════════════════════════════════════════ */
 function getPeriod(sunriseStr, sunsetStr, now) {
   const sunrise = new Date(sunriseStr);
   const sunset  = new Date(sunsetStr);
-  const marge = 30 * 60 * 1000; // 30 minutes de transition autour du lever/coucher
-
+  const marge   = 30 * 60 * 1000;
   const aubeDebut = new Date(sunrise.getTime() - marge);
   const aubeFin   = new Date(sunrise.getTime() + marge);
-  const crepDebut = new Date(sunset.getTime() - marge);
-  const crepFin   = new Date(sunset.getTime() + marge);
-
+  const crepDebut = new Date(sunset.getTime()  - marge);
+  const crepFin   = new Date(sunset.getTime()  + marge);
   if (now < aubeDebut) return 'nuit';
   if (now < aubeFin)   return 'aube';
   if (now < crepDebut) return 'jour';
@@ -612,12 +586,14 @@ function getPeriod(sunriseStr, sunsetStr, now) {
   return 'nuit';
 }
 
-/** Pose la classe de thème correspondante sur <body> (theme-aube / theme-jour / theme-crepuscule / theme-nuit). */
 function applyTheme(period) {
-  document.body.classList.remove('theme-aube', 'theme-jour', 'theme-crepuscule', 'theme-nuit');
+  document.body.classList.remove('theme-aube','theme-jour','theme-crepuscule','theme-nuit');
   document.body.classList.add('theme-' + period);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   GÉNÉRATION SVG
+   ═══════════════════════════════════════════════════════════════ */
 function gearSVG(size, color='#c8a84b') {
   const teeth = 8, r1 = size*.42, r2 = size*.32, ri = size*.18;
   let d = '';
@@ -635,14 +611,6 @@ function gearSVG(size, color='#c8a84b') {
   </svg>`;
 }
 
-/**
- * Génère le cristal SVG avec l'icône météo incrustée en son centre.
- *
- * @param {number} size Taille du cristal en pixels (largeur/hauteur du SVG)
- * @param {string} icon Emoji (icône météo) à afficher au centre du cristal
- * @param {number} iconSize Taille de la police de l'icône (ajustable indépendamment de `size`)
- * @returns {string} Markup SVG du cristal
- */
 function crystalSVG(size=72, icon='🌡️', iconSize=26) {
   return `<svg class="crystal-icon" width="${size}" height="${size}" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
     <polygon points="36,3 58,18 58,54 36,69 14,54 14,18" fill="#a8d4e8" fill-opacity=".65" stroke="#c8e8f4" stroke-width="1.2"/>
@@ -651,95 +619,70 @@ function crystalSVG(size=72, icon='🌡️', iconSize=26) {
     <line x1="36" y1="3" x2="36" y2="69" stroke="#e8f6fc" stroke-width=".8" stroke-opacity=".7"/>
     <line x1="14" y1="18" x2="58" y2="54" stroke="#e8f6fc" stroke-width=".6" stroke-opacity=".5"/>
     <line x1="58" y1="18" x2="14" y2="54" stroke="#e8f6fc" stroke-width=".6" stroke-opacity=".5"/>
-    <!-- L'icône est dessinée dans le MÊME système de coordonnées que le cristal (viewBox 0 0 72 72),
-         donc quand .crystal-icon flotte / tourne via crystalFloat, l'icône suit exactement le cristal
-         et reste toujours centrée en (36,36), peu importe l'animation. -->
     <text x="36" y="36" text-anchor="middle" dominant-baseline="central" dy="0.05em"
           font-size="${iconSize}" fill="#2a1f14"
           style="font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;">${icon}</text>
   </svg>`;
 }
 
-/**
- * Calcule la température ressentie.
- *
- * @param {number} T Température de l'air (°C)
- * @param {number} V Vitesse du vent (km/h)
- * @param {number} H Humidité relative (%)
- * @returns {number} Température ressentie (°C)
- */
+/* ═══════════════════════════════════════════════════════════════
+   TEMPÉRATURE RESSENTIE
+   ═══════════════════════════════════════════════════════════════ */
 function temperatureRessentie(T, V, H) {
-
-  // Cas 1 : chaleur (Heat Index)
   if (T >= 27) {
-    // Conversion en Fahrenheit
-    const Tf = T * 9 / 5 + 32;
-
+    const Tf = T * 9/5 + 32;
     const HI =
       -42.379 +
-      2.04901523 * Tf +
-      10.14333127 * H -
-      0.22475541 * Tf * H -
-      0.00683783 * Tf * Tf -
-      0.05481717 * H * H +
-      0.00122874 * Tf * Tf * H +
-      0.00085282 * Tf * H * H -
-      0.00000199 * Tf * Tf * H * H;
-
-    // Retour en °C
+       2.04901523  * Tf +
+      10.14333127  * H -
+       0.22475541  * Tf * H -
+       0.00683783  * Tf * Tf -
+       0.05481717  * H  * H  +
+       0.00122874  * Tf * Tf * H +
+       0.00085282  * Tf * H  * H -
+       0.00000199  * Tf * Tf * H * H;
     return (HI - 32) * 5 / 9;
   }
-
-  // Cas 2 : froid (Wind Chill)
   if (T <= 10 && V > 4.8) {
-    return (
-      13.12 +
-      0.6215 * T -
-      11.37 * Math.pow(V, 0.16) +
-      0.3965 * T * Math.pow(V, 0.16)
-    );
+    return 13.12 + 0.6215*T - 11.37*Math.pow(V,0.16) + 0.3965*T*Math.pow(V,0.16);
   }
-
-  // Cas 3 : températures modérées
-  return (
-    T -
-    0.7 * Math.sqrt(V) +
-    0.02 * (H - 50)
-  );
+  return T - 0.7*Math.sqrt(V) + 0.02*(H - 50);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   ÉTAT PARTAGÉ
+   ═══════════════════════════════════════════════════════════════ */
+let cachedWeather   = null;  // dernières données valides
+let widgetRendered  = false; // true dès le premier render() réussi
+let consecutiveErr  = 0;     // compteur d'échecs consécutifs pour le backoff
 
-
+/* ═══════════════════════════════════════════════════════════════
+   RENDER COMPLET (premier chargement + refresh données 30 min)
+   Reconstruit l'intégralité du DOM du widget.
+   ═══════════════════════════════════════════════════════════════ */
 function render(d) {
-  const c = d.current;
-  const now = new Date();
+  const now     = new Date();
   const timeStr = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-
-  const period = getPeriod(d.daily.sunrise[0], d.daily.sunset[0], now);
+  const period  = getPeriod(d.daily.sunrise[0], d.daily.sunset[0], now);
   applyTheme(period);
 
+  const c      = d.current;
   const isNight = c.is_day === 0;
-  const icon = pickIcon(c.weather_code, isNight);
-  const cond = WMO_TXT[c.weather_code] ?? 'Données indisponibles';
-  const temp = Math.round(c.temperature_2m);
-  const hum  = c.relative_humidity_2m;
-  const wind = Math.round(c.wind_speed_10m);
+  const icon   = pickIcon(c.weather_code, isNight);
+  const cond   = WMO_TXT[c.weather_code] ?? 'Données indisponibles';
+  const temp   = Math.round(c.temperature_2m);
+  const hum    = c.relative_humidity_2m;
+  const wind   = Math.round(c.wind_speed_10m);
 
-  const ressenti = Math.round(//Pas encore utilisé dans l'affichage, mais calculé pour info
-  temperatureRessentie(
-    c.temperature_2m,
-    c.wind_speed_10m,
-    c.relative_humidity_2m
-  )
-);
-console.log("la temperature ressentie : "+ ressenti);
+  const ressenti = Math.round(temperatureRessentie(c.temperature_2m, c.wind_speed_10m, c.relative_humidity_2m));
+  console.log('Température ressentie :', ressenti, '°C');
 
   const forecastHTML = d.daily.time.slice(0,5).map((dateStr, i) => {
-    const date = new Date(dateStr + 'T00:00:00');
+    const date   = new Date(dateStr + 'T00:00:00');
     const dayName = i === 0 ? 'Auj.' : DAYS_FR[date.getDay()];
-    const fi = WMO[d.daily.weather_code[i]] ?? '🌡️';
-    const ft = Math.round(d.daily.temperature_2m_max[i]);
-    const fp = d.daily.precipitation_probability_max[i] ?? 0;
+    const fi     = WMO[d.daily.weather_code[i]] ?? '🌡️';
+    const ft     = Math.round(d.daily.temperature_2m_max[i]);
+    const fp     = d.daily.precipitation_probability_max[i] ?? 0;
     return `
       <div class="day">
         <div class="day-name">${dayName}</div>
@@ -751,29 +694,24 @@ console.log("la temperature ressentie : "+ ressenti);
 
   document.getElementById('widget').innerHTML = `
     <div class="header">
-      <!-- Étoiles (visibles selon le cycle jour/nuit) -->
       <div class="stars-wrap"><div class="stars"></div></div>
 
-      <!-- Animated SVG clouds in header -->
       <svg class="clouds-svg" viewBox="0 0 400 120" xmlns="http://www.w3.org/2000/svg">
-        <!-- Cloud 1 (far, big, le plus à droite) -->
         <g class="cloud-1">
           <g opacity=".18">
             <ellipse cx="320" cy="30" rx="55" ry="18" fill="white"/>
             <ellipse cx="295" cy="35" rx="30" ry="16" fill="white"/>
             <ellipse cx="350" cy="35" rx="28" ry="14" fill="white"/>
           </g>
-          <text x="320" y="31" text-anchor="middle" dominant-baseline="central"
+          <text id="clock-svg" x="320" y="31" text-anchor="middle" dominant-baseline="central"
                 font-family="Cinzel, serif" font-size="14" letter-spacing="1.5"
                 fill="#f5f0e2" opacity=".55">${timeStr}</text>
         </g>
-        <!-- Cloud 2 (mid) -->
         <g class="cloud-2" opacity=".13">
           <ellipse cx="60" cy="55" rx="38" ry="13" fill="white"/>
           <ellipse cx="42" cy="59" rx="20" ry="12" fill="white"/>
           <ellipse cx="80" cy="59" rx="22" ry="11" fill="white"/>
         </g>
-        <!-- Cloud 3 (small, near) -->
         <g class="cloud-3" opacity=".1">
           <ellipse cx="200" cy="20" rx="28" ry="9" fill="white"/>
           <ellipse cx="185" cy="24" rx="16" ry="8" fill="white"/>
@@ -781,12 +719,9 @@ console.log("la temperature ressentie : "+ ressenti);
         </g>
       </svg>
 
-      <!-- Flying bird -->
-      <div class="bird-wrap">
-        <div class="bird">🕊️</div>
-      </div>
+      <div class="bird-wrap"><div class="bird">🕊️</div></div>
 
-      <div class="location">✦ La méteo de Lileen ✦</div>
+      <div class="location">✦ La météo de Lileen ✦</div>
       <div class="city">La Maison en brique</div>
       <div class="island">La Réunion · Océan Indien</div>
 
@@ -794,12 +729,11 @@ console.log("la temperature ressentie : "+ ressenti);
         <div>
           <span class="temp-big">${temp}<span class="temp-unit">°C</span></span>
           <div class="condition-text">${cond}</div>
-          <div class="update-time">⏱ Consulté à ${timeStr}</div>
+          <div id="update-time" class="update-time">⏱ Consulté à ${timeStr}</div>
         </div>
         ${crystalSVG(72, icon, 26)}
       </div>
 
-      <!-- Gears bottom-right -->
       <div class="gear-wrap">
         <div class="gear-big">${gearSVG(28, '#c8a84b')}</div>
         <div class="gear-small">${gearSVG(18, '#a08038')}</div>
@@ -831,36 +765,143 @@ console.log("la temperature ressentie : "+ ressenti);
     </div>
 
     <div class="footer">
-      ✦ Données : Open-Meteo · Lileen Weather Bureau · Mise à jour toutes les 30 min ✦
+      <span class="footer-orb" id="footer-orb">✦</span>
+      Données : Open-Meteo · Lileen Weather Bureau · Mise à jour toutes les 30 min
+      <span class="footer-orb" id="footer-orb2">✦</span>
     </div>
   `;
+
+  widgetRendered = true;
 }
 
-let cachedWeather = null;
+/* ═══════════════════════════════════════════════════════════════
+   TICK D'HORLOGE — chaque seconde, mise à jour ciblée du DOM
+   (pas de re-render, pas de recalcul des données)
+   ═══════════════════════════════════════════════════════════════ */
+function tickClock() {
+  if (!widgetRendered) return;
 
-(async () => {
+  const now     = new Date();
+  const timeStr = now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+
+  // 1. Horloge dans le nuage SVG
+  const clockEl = document.getElementById('clock-svg');
+  if (clockEl) clockEl.textContent = timeStr;
+
+  // 2. Ligne "Consulté à …"
+  const updateEl = document.getElementById('update-time');
+  if (updateEl) updateEl.textContent = '⏱ Consulté à ' + timeStr;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TICK DE CYCLE — chaque minute, réévalue le thème aube/jour/…
+   sans rebâtir le DOM (juste la classe CSS sur <body>)
+   ═══════════════════════════════════════════════════════════════ */
+function tickTheme() {
+  if (!cachedWeather) return;
+  const period = getPeriod(
+    cachedWeather.daily.sunrise[0],
+    cachedWeather.daily.sunset[0],
+    new Date()
+  );
+  applyTheme(period);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FETCH AVEC RETRY EXPONENTIEL
+   Délais : 30 s → 60 s → 2 min → 4 min → 8 min (plafond 10 min)
+   ═══════════════════════════════════════════════════════════════ */
+const FETCH_URL =
+  'https://api.open-meteo.com/v1/forecast' +
+  '?latitude=-20.8873039&longitude=55.4224441' +
+  '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code,is_day' +
+  '&daily=weather_code,temperature_2m_max,precipitation_probability_max,sunrise,sunset' +
+  '&timezone=Indian%2FReunion&forecast_days=5&wind_speed_unit=kmh';
+
+const RETRY_DELAYS_MS = [30_000, 60_000, 120_000, 240_000]; // 30 s, 1 min, 2 min, 4 min
+const NORMAL_INTERVAL_MS = 30 * 60 * 1000;                  // 30 min
+
+let weatherFetchTimer = null; // référence au prochain setTimeout de fetch
+
+/** Signale visuellement un fetch en cours dans le footer. */
+function setFetchingState(active) {
+  ['footer-orb', 'footer-orb2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.toggle('fetching', active);
+    el.classList.remove('error');
+  });
+}
+
+/** Signale une erreur persistante dans le footer. */
+function setErrorState() {
+  ['footer-orb', 'footer-orb2'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('fetching');
+    el.classList.add('error');
+  });
+}
+
+/**
+ * Lance un fetch, puis planifie le suivant :
+ * - En cas de succès : dans 30 min (NORMAL_INTERVAL_MS), reset du compteur d'erreurs.
+ * - En cas d'échec  : retry exponentiel (RETRY_DELAYS_MS), puis 30 min dès le retour réseau.
+ *
+ * @param {boolean} [silent=false] Si true, n'affiche pas l'état "fetching" (utilisé pour le 1er chargement).
+ */
+async function scheduledFetch(silent = false) {
+  if (!silent) setFetchingState(true);
+
   try {
-    cachedWeather = await fetchWeather();
-    render(cachedWeather);
+    const r = await fetch(FETCH_URL);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
 
-    // Rafraîchit les données météo toutes les 30 minutes
-    setInterval(async () => {
-      try {
-        cachedWeather = await fetchWeather();
-        render(cachedWeather);
-      } catch(e) {}
-    }, 30 * 60 * 1000);
+    cachedWeather    = data;
+    consecutiveErr   = 0;
+    setFetchingState(false);
+    render(data);
 
-    // Recalcule le cycle aube/jour/crépuscule/nuit (et l'horloge affichée)
-    // chaque minute, sans appel réseau, à partir des dernières données en cache.
-    setInterval(() => {
-      if (cachedWeather) render(cachedWeather);
-    }, 60 * 1000);
-  } catch(e) {
-    document.getElementById('widget').innerHTML =
-      `<div class="error-msg">✦ Les vents sont introuvables.<br><small style="font-size:10px">${e.message}</small></div>`;
+    // Prochain fetch dans 30 min
+    clearTimeout(weatherFetchTimer);
+    weatherFetchTimer = setTimeout(() => scheduledFetch(), NORMAL_INTERVAL_MS);
+
+  } catch (e) {
+    console.warn('Lileen Weather — fetch échoué :', e.message);
+    setFetchingState(false);
+
+    if (!widgetRendered) {
+      // Premier chargement en échec : affiche un message d'erreur
+      document.getElementById('widget').innerHTML =
+        `<div class="error-msg">✦ Les vents sont introuvables.<br>
+         <small style="font-size:10px">${e.message}</small><br>
+         <small style="font-size:10px;opacity:.6">Nouvelle tentative dans quelques secondes…</small></div>`;
+    } else {
+      // Le widget est déjà affiché : on signale l'erreur discrètement
+      setErrorState();
+    }
+
+    // Retry avec délai exponentiel
+    const delay = RETRY_DELAYS_MS[Math.min(consecutiveErr, RETRY_DELAYS_MS.length - 1)];
+    consecutiveErr++;
+    console.log('Retry dans', delay / 1000, 's (tentative', consecutiveErr, ')');
+    clearTimeout(weatherFetchTimer);
+    weatherFetchTimer = setTimeout(() => scheduledFetch(), delay);
   }
-})();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DÉMARRAGE
+   ═══════════════════════════════════════════════════════════════ */
+// Tick d'horloge : toutes les secondes, mise à jour ciblée uniquement
+setInterval(tickClock, 1_000);
+
+// Tick de thème : chaque minute, réévalue le cycle sans toucher au DOM de données
+setInterval(tickTheme, 60_000);
+
+// Premier fetch (immédiat)
+scheduledFetch(true);
 </script>
 </body>
 </html>
