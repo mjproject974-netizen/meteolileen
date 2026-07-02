@@ -620,6 +620,71 @@
       color: var(--lileen-rust);
       font-size: 13px;
     }
+
+    /* ── Calcifer ── */
+    @keyframes calciferFlicker {
+      0%,100% { transform: scaleY(1)    scaleX(1);    }
+      15%     { transform: scaleY(1.09) scaleX(0.93); }
+      35%     { transform: scaleY(0.93) scaleX(1.06); }
+      60%     { transform: scaleY(1.06) scaleX(0.96); }
+      80%     { transform: scaleY(0.95) scaleX(1.04); }
+    }
+    @keyframes calciferGlow {
+      0%,100% { filter: drop-shadow(0 0 4px rgba(40,100,240,0.55)); }
+      50%     { filter: drop-shadow(0 0 14px rgba(80,160,255,0.95)); }
+    }
+    @keyframes eyeBlink {
+      0%,86%,100% { transform: scaleY(1); }
+      93%         { transform: scaleY(0.08); }
+    }
+
+    /* ── Lucioles (nuit) ── */
+    @keyframes fireflyDrift {
+      0%    { opacity: 0;   transform: translate(0,0); }
+      20%   { opacity: 0.9; }
+      55%   { opacity: 0.5; transform: translate(var(--fx,10px),var(--fy,-14px)); }
+      80%   { opacity: 0.7; }
+      100%  { opacity: 0;   transform: translate(0,0); }
+    }
+    @keyframes fireflyGlow {
+      0%,100% { box-shadow: 0 0 2px 1px rgba(180,255,120,0.55); }
+      50%     { box-shadow: 0 0 6px 3px rgba(210,255,150,0.92); }
+    }
+
+    /* ── Calcifer ── */
+    .calcifer-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      vertical-align: middle;
+      animation: calciferGlow 2.2s ease-in-out infinite;
+    }
+    .calcifer-svg {
+      transform-origin: 50% 90%;
+      animation: calciferFlicker 1.9s ease-in-out infinite;
+      overflow: visible;
+    }
+    .calcifer-eye {
+      transform-box: fill-box;
+      transform-origin: 50% 50%;
+      animation: eyeBlink 5s ease-in-out infinite;
+    }
+
+    /* ── Lucioles ── */
+    .firefly {
+      position: absolute;
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: rgba(200,255,140,0.85);
+      display: none;
+      animation:
+        fireflyDrift var(--fd,5s)  ease-in-out infinite var(--fdelay,0s),
+        fireflyGlow  1.6s ease-in-out infinite var(--fdelay,0s);
+    }
+    body.theme-nuit .firefly { display: block; }
+
+    /* La section forecast devient le conteneur relatif des lucioles */
+    .forecast { position: relative; }
   </style>
 </head>
 <body>
@@ -749,6 +814,60 @@ function temperatureRessentie(T, V, H) {
   return T - 0.7*Math.sqrt(V) + 0.02*(H - 50);
 }
 
+/* ══════════════════════════════════════════════════════════════════
+   GHIBLI — génération des éléments animés
+   ══════════════════════════════════════════════════════════════════ */
+
+/**
+ * Génère le HTML de Calcifer (flamme SVG animée avec yeux).
+ * À insérer dans le footer.
+ */
+function calciferHTML() {
+  return `<span class="calcifer-wrap" title="Calcifer veille sur Lileen">
+    <svg class="calcifer-svg" viewBox="0 0 32 38" width="19" height="23"
+         xmlns="http://www.w3.org/2000/svg" overflow="visible">
+      <!-- Flamme extérieure -->
+      <path d="M16,36 C8,36 3,29 3,23 C3,17 7,13 9,9 C10,7 9,3 11,1
+               C11,7 13,9 16,7 C19,9 21,7 21,1 C23,3 22,7 23,9
+               C25,13 29,17 29,23 C29,29 24,36 16,36Z"
+            fill="#e07818" opacity=".96"/>
+      <!-- Flamme intermédiaire -->
+      <path d="M16,33 C10,33 6,28 6,23 C6,18 9,14 11,11
+               C12,14 13,16 16,15 C19,16 20,14 21,11
+               C23,14 26,18 26,23 C26,28 22,33 16,33Z"
+            fill="#f0a028" opacity=".92"/>
+      <!-- Cœur -->
+      <path d="M16,30 C12,30 9,27 9,23 C9,19 11,17 13,15
+               C14,17 15,18 16,18 C17,18 18,17 19,15
+               C21,17 23,19 23,23 C23,27 20,30 16,30Z"
+            fill="#f8d060" opacity=".88"/>
+      <!-- Yeux de Calcifer -->
+      <g class="calcifer-eye">
+        <ellipse cx="12" cy="24" rx="3.5" ry="4"  fill="#2a0e04"/>
+        <ellipse cx="20" cy="24" rx="3.5" ry="4"  fill="#2a0e04"/>
+        <circle  cx="13" cy="22.5" r="1.3"         fill="white" opacity=".90"/>
+        <circle  cx="21" cy="22.5" r="1.3"         fill="white" opacity=".90"/>
+      </g>
+    </svg>
+  </span>`;
+}
+
+/**
+ * Génère N lucioles en positions aléatoires.
+ * Visibles uniquement via body.theme-nuit .firefly { display:block }.
+ */
+function firefliesHTML(n = 8) {
+  return Array.from({length: n}, () => {
+    const left = (5  + Math.random() * 88).toFixed(1);
+    const top  = (5  + Math.random() * 82).toFixed(1);
+    const fx   = ((Math.random() - 0.5) * 34).toFixed(0);
+    const fy   = ((Math.random() - 0.5) * 28).toFixed(0);
+    const fd   = (4  + Math.random() * 5).toFixed(1);
+    const del  = (Math.random() * 7).toFixed(1);
+    return `<div class="firefly" style="left:${left}%;top:${top}%;--fx:${fx}px;--fy:${fy}px;--fd:${fd}s;--fdelay:${del}s"></div>`;
+  }).join('');
+}
+
 /* ═══════════════════════════════════════════════════════════════
    ÉTAT PARTAGÉ
    ═══════════════════════════════════════════════════════════════ */
@@ -839,6 +958,7 @@ function render(d) {
         <div class="gear-small">${gearSVG(18, '#a08038')}</div>
         <div class="gear-tiny">${gearSVG(12, '#c8a84b')}</div>
       </div>
+
     </div>
 
     <div class="stats">
@@ -860,13 +980,15 @@ function render(d) {
     </div>
 
     <div class="forecast">
+      ${firefliesHTML()}
       <div class="forecast-title">Prévisions du Ciel</div>
       <div class="days">${forecastHTML}</div>
     </div>
 
     <div class="footer">
+      ${calciferHTML()}
       <span class="footer-orb" id="footer-orb">✦</span>
-      Données : Open-Meteo · Lileen Weather Bureau · Mise à jour toutes les 30 min
+      Lileen Weather Bureau · Open-Meteo · toutes les 30 min
       <span class="footer-orb" id="footer-orb2">✦</span>
     </div>
   `;
